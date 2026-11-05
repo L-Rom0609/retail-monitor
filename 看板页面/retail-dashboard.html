@@ -1076,7 +1076,7 @@
 </style>
 <!-- 数据预热：让数据文件与 HTML 并行下载，省掉「解析完 HTML 才发起请求」的一整个往返 -->
 <link rel="preconnect" href="https://gcore.jsdelivr.net" crossorigin />
-<link rel="preload" as="fetch" href="https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@4348f0dd4faa/dashboard-data.bin" crossorigin="anonymous" />
+<link rel="preload" as="fetch" href="https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@04db8d0f0c43/dashboard-data.bin" crossorigin="anonymous" />
 </head>
 <body>
 <div id="authGate">
@@ -1774,8 +1774,8 @@
   //       走 jsDelivr 的 CDN 节点可达 200KB/s 以上，首屏快 5~8 倍。
   // 缓存用 no-cache（带 ETag 重验证）：数据没变只回 304，一变立刻拿到新版。
   var DATA_URLS = [
-    "https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@4348f0dd4faa/dashboard-data.bin",
-    "https://cdn.jsdelivr.net/gh/L-Rom0609/retail-monitor@4348f0dd4faa/dashboard-data.bin",
+    "https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@04db8d0f0c43/dashboard-data.bin",
+    "https://cdn.jsdelivr.net/gh/L-Rom0609/retail-monitor@04db8d0f0c43/dashboard-data.bin",
     "./dashboard-data.bin"
   ];
   function gunzipBytes(buf){
