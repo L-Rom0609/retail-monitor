@@ -365,9 +365,13 @@ def pin_cdn_version():
 def git_push(cfg):
     """提交受跟踪文件并推送到远程。返回 True 表示成功。"""
     git("add", *TRACKED, check=False)
-    # 没有可提交改动就跳过
+    # 没有可提交改动、且本地也没有领先远端的提交（如压缩后重新钉版本产生的提交）就跳过
     ok, _ = git_ok("diff", "--cached", "--quiet")
+    ahead = "0"
     if ok:
+        aok, aout = git_ok("rev-list", "--count", "%s/%s..%s" % (cfg["remote"], cfg["branch"], cfg["branch"]))
+        ahead = (aout or "0").strip() if aok else "1"
+    if ok and ahead == "0":
         log("没有需要提交的变更。")
         return True
     msg = "数据更新 %s" % _now()
@@ -548,6 +552,11 @@ def main():
         squash_history(cfg)
     elif not no_squash:
         maybe_squash(cfg)
+
+    # 历史压缩会重写提交链，把刚钉上去的提交号作废（数据 URL 会 404）。
+    # 所以压缩之后必须重新钉一次版本；若产生了新提交则补推。
+    pin_cdn_version()
+    git_push(cfg)
 
     log("=== 双端同步完成 ===")
     log("已生成本地看板 index.html 与外部数据文件 dashboard-data.bin（同目录）。")
