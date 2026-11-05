@@ -1,0 +1,33 @@
+# 生成产物（本地再看板时重新生成，不入库）
+# 注：retail-dashboard.html 作为「看板外壳」需要入库（双端克隆后可直接发布），
+#     已在 sync.py 的 TRACKED 中显式跟踪。
+data.json
+历史数据/dashboard-data.json
+
+# 本地备份 / 发布 / 旧同步脚本
+历史备份/
+看板页面/看板发布/
+脚本/自动同步/
+node_modules/
+__pycache__/
+
+# 本地输入（CSV 等原始底表，含业务数据，不入库；只同步聚合后的历史存档）
+数据底表/
+更新日志.txt
+*.bak
+
+# 个人配置（含远程地址 / 令牌）
+配置与映射/sync_config.json
+sync_config.json
+
+# 样式预览 / 临时文件
+预览*.html
+预览截图*.png
+.workbuddy/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 流量页中间数据（由 脚本/build_traffic.py 生成，产物 traffic-data.bin 才入库）
+历史数据/traffic_payload.json
