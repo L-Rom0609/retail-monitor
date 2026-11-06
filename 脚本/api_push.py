@@ -54,6 +54,7 @@ def http(method, path, token, payload=None):
 
 
 def main():
+    FORCE = "--force" in sys.argv
     sys.path.insert(0, os.path.join(HERE, "脚本"))
     import importlib.util
     spec = importlib.util.spec_from_file_location("sync_mod", os.path.join(HERE, "脚本", "sync.py"))
@@ -165,7 +166,7 @@ def main():
         if d["sha"] != csha:
             sys.exit("commit sha 不一致！本地 %s vs 远端生成 %s（中止，未动 ref）" % (csha, d["sha"]))
         code, d = http("PATCH", "/git/refs/heads/" + cfg["branch"], token,
-                       {"sha": csha, "force": False})
+                       {"sha": csha, "force": FORCE})
         if code != 200:
             sys.exit("ref 更新失败: %s %s" % (code, d))
         print("  ✓ %s  %s" % (csha[:7], msg_b.decode("utf-8", "replace").strip().splitlines()[0]))
