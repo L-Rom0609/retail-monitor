@@ -1013,6 +1013,39 @@
 .opsg-empty{padding:22px;text-align:center;color:#94A3B8;font-size:12.5px;}
 .opsg-sum{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#64748B;margin-top:10px;padding-top:10px;border-top:1px solid #E9EFF7;}
 .opsg-sum b{color:#0B2447;}
+
+  /* ===== 手机端优化增补（2026-11-06 上线，preview-v4 已验证） ===== */
+  @media (max-width:700px){
+    /* 1) 页签导航：横向滑动，6 个页签不再被截断 */
+    .pagetabs{overflow-x:auto;flex-wrap:nowrap;justify-content:flex-start;padding:10px 10px 0;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+    .pagetabs::-webkit-scrollbar{display:none;}
+    .ptab{flex:0 0 auto;padding:9px 12px 11px;font-size:13px;white-space:nowrap;}
+
+    /* 2) 运营目标卡：目标输入整行放下，头部不拥挤 */
+    .opsg-head{gap:6px;}
+    .opsg-goalbox{margin-left:0;flex:1 1 100%;justify-content:space-between;padding-top:3px;}
+    .opsg-goalbox input{flex:1;min-width:0;width:auto;}
+    .opsg-main{gap:12px;}
+    .opsg-main .val{font-size:17px;}
+    .opsg-main .val.pct{font-size:17px;}
+    .opsg-bar{height:10px;}
+    .opsg-bar .tk{width:3px;top:-4px;bottom:-4px;}
+    .opsg-pf{gap:7px;}
+    .opsg-sum{font-size:11px;gap:6px 10px;}
+
+    /* 3) 全体合计行：固定两列网格，不再随意换行 */
+    #opsGoalGrid>div:first-child{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;align-items:baseline;}
+    #opsGoalGrid>div:first-child>b{grid-column:1/-1;}
+
+    /* 4) 卡片内边距微收 */
+    .opsg-card{padding:11px 12px 12px;}
+    #opsGoalCard{padding:12px 12px 14px;}
+  }
+  @media (max-width:380px){
+    .ptab{padding:9px 10px 11px;font-size:12.5px;}
+    .opsg-main .val{font-size:16px;}
+    .opsg-main .val.pct{font-size:16px;}
+  }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@0.1.4/lib/index.global.js"></script>
 <script>
