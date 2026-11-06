@@ -41,3 +41,6 @@ preview-v*.html
 mobile-*.png
 .tmp_patch/
 *-opsgoal.png
+
+# 全量重算临时输入
+.tmp_rebuild_input/
