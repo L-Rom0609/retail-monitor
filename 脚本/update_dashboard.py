@@ -3,14 +3,17 @@
 即时零售数据监控看板 —— 一键数据更新脚本（新手友好）
 ==================================================
 最简单用法（推荐）：
-    把【订单底表.csv】和【仓名-负责人归属关系表.xlsx】放进桌面文件夹
-    「数据看板--底表更新」，然后双击「一键更新看板.bat」。
-    脚本会自动在这个文件夹里找到两个底表，不需要输入任何命令。
+    把【订单底表.csv】放进桌面文件夹「数据看板--底表更新」，双击「一键更新看板.bat」。
+
+★ 归属表唯一真源（2026-11-06 用户规则）★
+    仓名-负责人归属关系表一律以仓库内这份为准，且只能改这一份：
+        配置与映射/仓名-负责人归属关系表.xlsx
+    脚本不再读取桌面或其它位置的归属表副本（历史上两版并存曾导致 30 个仓的历史被删）。
 
 其它用法（可选）：
     1) 双击本脚本运行                                  → 自动扫描底表文件夹
-    2) python update_dashboard.py 订单.csv 归属表.xlsx  → 手动指定文件
-    3) 把 csv/xlsx 拖到 .bat 图标上放开                 → 用拖进来的文件
+    2) python update_dashboard.py 订单.csv              → 手动指定订单底表
+    3) 把 csv 拖到 .bat 图标上放开                      → 用拖进来的订单底表（xlsx 参数已废弃）
 
 ★ 历史累积存档（重要）★
     本脚本带「历史数据仓库」：每次更新都是往数据仓库里【追加/覆盖】，
@@ -189,10 +192,13 @@ def norm_store_id(s):
 
 
 def resolve_paths():
-    """决定用哪些底表：命令行指定 > 底表文件夹自动查找 > 桌面兜底文件。
+    """决定用哪些底表：订单表按 命令行指定 > 底表文件夹自动查找 > 桌面兜底；
+    归属表【只认仓库内 配置与映射/仓名-负责人归属关系表.xlsx】——2026-11-06 用户规则：
+    后续所有仓名-负责人归属关系一律以仓库该链路里的表为准，命令行/桌面副本一律忽略，
+    避免两个版本互相覆盖（10-31~11-06 曾因桌面 217 行版与仓库 190 行版并存导致 30 仓历史被删）。
     订单表返回【列表】——文件夹里可以放多份 csv，会一次性全部读进来叠加。"""
-    csv_list, xlsx_p = [], None
-    # 1) 命令行 / 拖拽传入
+    csv_list = []
+    # 1) 命令行 / 拖拽传入（仅接受 csv；xlsx 参数已废弃，忽略并提示）
     for a in sys.argv[1:]:
         if a.startswith('-'):
             continue
@@ -200,7 +206,7 @@ def resolve_paths():
         if low.endswith('.csv'):
             csv_list.append(a)
         elif low.endswith('.xlsx') or low.endswith('.xls'):
-            xlsx_p = a
+            print("[提示] 归属表只认仓库内 配置与映射/仓名-负责人归属关系表.xlsx，已忽略参数：%s" % a)
     # 2) 底表文件夹自动查找（多份 csv 全收）
     if not csv_list:
         # 同时扫描桌面底表文件夹与仓库内「底表输入」子目录
@@ -209,19 +215,16 @@ def resolve_paths():
         hit = [p for p in csv_list if '订单' in os.path.basename(p)]
         if hit and len(hit) != len(csv_list):
             csv_list = hit
-    if not xlsx_p:
-        # 归属表以仓库内的副本为唯一真源（双端通过 Git 共享），其次仓库「底表输入」，最后桌面底表文件夹
-        cand = os.path.join(HERE, "配置与映射", "仓名-负责人归属关系表.xlsx")
-        if os.path.isfile(cand):
-            xlsx_p = cand
-        else:
-            xlsx_p = pick_from_folder(LOCAL_INPUT, ('.xlsx', '.xls'), ('归属', '负责人', '仓名')) \
-                or pick_from_folder(DATA_DIR, ('.xlsx', '.xls'), ('归属', '负责人', '仓名'))
-    # 3) 兜底
+    # 3) 订单表兜底
     if not csv_list and os.path.isfile(FALLBACK_CSV):
         csv_list = [FALLBACK_CSV]
-    if not xlsx_p and os.path.isfile(FALLBACK_XLSX):
-        xlsx_p = FALLBACK_XLSX
+    # 4) 归属表：唯一真源（必须存在，否则直接报错，不再悄悄退回桌面旧版）
+    xlsx_p = os.path.join(HERE, "配置与映射", "仓名-负责人归属关系表.xlsx")
+    if not os.path.isfile(xlsx_p):
+        raise SystemExit(
+            "[错误] 找不到唯一真源归属表：\n  %s\n"
+            "请把《仓名-负责人归属关系表.xlsx》放入仓库 配置与映射/ 目录后重试。\n"
+            "（桌面或其它位置的副本不会再被自动读取）" % xlsx_p)
     return csv_list, xlsx_p
 
 
@@ -758,8 +761,8 @@ def main():
     if not XLSX_PATH or not os.path.isfile(XLSX_PATH):
         raise SystemExit(
             '[没找到归属关系表]\n'
-            '请把《仓名-负责人归属关系表.xlsx》放进这个文件夹：\n  %s\n'
-            '（文件夹里至少要有一个 .xlsx 文件）' % DATA_DIR)
+            '请把《仓名-负责人归属关系表.xlsx》放进仓库的这个目录：\n  %s\n'
+            '（归属表唯一真源，桌面副本不再自动读取）' % os.path.join(HERE, '配置与映射'))
 
     if len(CSV_PATH) == 1:
         print('订单底表：%s' % os.path.basename(CSV_PATH[0]))
