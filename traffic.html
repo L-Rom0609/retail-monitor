@@ -309,7 +309,7 @@ tbody tr:hover td{background:#F8FBFF;}
 </style></head><body><div class="wrap">
 <div class="top">
   <div><h1>美团闪购 · 仓流量巡检</h1>
-    <div class="sub">2026-07-01 ~ 2026-11-04（127 天）· 187 个仓 / 208 家门店 · 营收单量取订单底表，流量取平台门店明细（商家ID ↔ 渠道店铺ID）</div></div>
+    <div class="sub">2026-07-01 ~ 2026-11-05（128 天）· 172 个仓 / 191 家门店 · 营收单量取订单底表，流量取平台门店明细（商家ID ↔ 渠道店铺ID）</div></div>
   <div class="right"><span class="pill mt"><i class="dot"></i>美团闪购</span><span class="pill" style="background:#E9F7F0;color:#0E7A46;border-color:#BFE7D5;">已上线</span>
     <span class="pill" id="helpBtn" style="cursor:pointer;background:var(--brand-soft);border-color:#CFE2FC;color:var(--brand)">字段含义与判定标准</span></div>
 </div>
@@ -356,9 +356,27 @@ tbody tr:hover td{background:#F8FBFF;}
     <div class="d"><b>入店转化率 / 下单转化率 / 折扣率 / 在线时长</b>：同样曝光转化低就是白拿流量；折扣率要和转化交叉看，别用补贴掩盖商品力问题。</div>
     <div class="f">判定：低于全盘中位 70% 标红提示</div></div>
 </div>
-<div class="cards" id="cards"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px" id="distWrap">
+  <div class="card">
+    <div class="card-h"><h2>入店转化率分布</h2><span class="hint" id="irHint"></span></div>
+    <div id="irDist"></div>
+  </div>
+  <div class="card">
+    <div class="card-h"><h2>下单转化率分布</h2><span class="hint" id="crHint"></span></div>
+    <div id="crDist"></div>
+  </div>
+</div>
+<div class="card" style="margin-bottom:12px">
+  <div class="card-h"><h2>偏离榜 · 低于全盘中位 30%（巡检收口）</h2><span class="hint" id="devHint"></span></div>
+  <div id="devBody"></div>
+</div>
+<div class="cards" id="cards" hidden></div>
+<div style="padding:8px 16px 14px;font-size:12px;color:#33517A;background:#F2F7FE;border:1px solid #D9E6F7;border-radius:10px;margin-bottom:4px">
+  说明：原「逐仓漏斗卡片列表」与经营中枢「单仓 360」完全同构，已收敛为上方两张转化分布图（含中位标尺）+ 偏离榜；点击仓名仍可打开该仓完整详情抽屉（含门店级明细）。
+</div>
+<div class="cards" id="cards" hidden></div>
 <div class="note">
-  <b>怎么巡检：</b>「统计区间」与主看板同款（环比口径可切换：自然月优先 / 等长周期），切换后全页联动——漏斗、KPI、仓卡片、风险判定、门店抽屉全部按所选区间重算，所有环比对比上一周期（红▲=增、绿▼=减）；顶部「负责人 + 仓名称」筛选与运营总览同款（仓名称可输入搜索），同样会让漏斗联动（筛单仓即可直接看该仓漏斗）；任一指标显著下滑时卡片会弹出「▼ 下滑提醒」并直接列出该排查的字段，其中<b>营收下滑、单量下滑为红色强提醒</b>（环比降幅 ≥10% 触发，优先展示）；点卡片看门店级明细，点「字段含义与判定标准」看每个字段的算法与阈值；点「未匹配门店」查看未归属的 133 家美团商家（建议补归属表）。<br>
+  <b>怎么巡检：</b>「统计区间」与主看板同款（环比口径可切换：自然月优先 / 等长周期），切换后全页联动——漏斗、KPI、仓卡片、风险判定、门店抽屉全部按所选区间重算，所有环比对比上一周期（红▲=增、绿▼=减）；顶部「负责人 + 仓名称」筛选与运营总览同款（仓名称可输入搜索），同样会让漏斗联动（筛单仓即可直接看该仓漏斗）；任一指标显著下滑时卡片会弹出「▼ 下滑提醒」并直接列出该排查的字段，其中<b>营收下滑、单量下滑为红色强提醒</b>（环比降幅 ≥10% 触发，优先展示）；点卡片看门店级明细，点「字段含义与判定标准」看每个字段的算法与阈值；点「未匹配门店」查看未归属的 150 家美团商家（建议补归属表）。<br>
   <b>口径：</b>营收/单量 = 订单底表美团闪购（11-02/11-03 底表日期为斜杠格式，已归一化）；曝光/转化/履约/评分 = 平台门店明细（7/8/9/10 月 + 11-01~03 共 5 份）按商家ID汇总重算。区间内订单 &lt;10 单的仓不做风险判定。
 </div>
 </div>
@@ -368,8 +386,8 @@ tbody tr:hover td{background:#F8FBFF;}
 <script>
 (function(){
 var DATA_URLS = [
-  "https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@04db8d0f0c43/traffic-data.bin",
-  "https://cdn.jsdelivr.net/gh/L-Rom0609/retail-monitor@04db8d0f0c43/traffic-data.bin",
+  "https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@main/traffic-data.bin",
+  "https://cdn.jsdelivr.net/gh/L-Rom0609/retail-monitor@main/traffic-data.bin",
   "./traffic-data.bin"];
 var msg = document.createElement("div");
 msg.id = "bootmsg";
@@ -950,8 +968,97 @@ document.getElementById('seg2').onclick = e=>{
   render();
 };
 
+/* ===== 优化版（注入）：转化率分布 + 中位标尺 + 偏离榜 ===== */
+function medianD(arr){
+  if(!arr.length) return null;
+  const a=arr.slice().sort(function(x,y){return x-y;});
+  return a[Math.floor(a.length/2)];
+}
+function distSVG(vals, med){
+  if(vals.length<3) return '<div class="empty" style="padding:18px">样本不足</div>';
+  const mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
+  const NB=14, w=14, gap=5, H=120, pad=6;
+  const bw=(mx-mn)||1;
+  const bins=new Array(NB).fill(0);
+  vals.forEach(v=>{ let bi=Math.floor((v-mn)/bw*NB); if(bi>=NB)bi=NB-1; if(bi<0)bi=0; bins[bi]++; });
+  const bc=Math.max.apply(null,bins);
+  let s='<svg viewBox="0 0 '+(NB*(w+gap)+pad*2)+' '+(H+38)+'" width="100%" style="max-width:520px;display:block">';
+  bins.forEach(function(c,i){
+    const bh=bc? c/bc*(H-16):0;
+    const x=pad+i*(w+gap);
+    s+='<rect x="'+x+'" y="'+(H-bh)+'" width="'+w+'" height="'+bh+'" rx="2.5" fill="'+(c?'#7FA9F0':'#E7EEF9')+'"><title>'+Math.round((mn+i/NB*bw)*10)/10+'% ~ '+Math.round((mn+(i+1)/NB*bw)*10)/10+'%：'+c+' 个仓</title></rect>';
+  });
+  if(med!=null){
+    const mxp=pad+((med-mn)/bw*(NB*(w+gap)-gap));
+    if(mxp>=pad&&mxp<=pad+NB*(w+gap)-gap)
+      s+='<line x1="'+mxp+'" y1="2" x2="'+mxp+'" y2="'+H+'" stroke="#E5484D" stroke-width="2" stroke-dasharray="4 3"/><text x="'+mxp+'" y="'+(H+14)+'" text-anchor="middle" font-size="11" fill="#E5484D" font-weight="700">中位 '+med.toFixed(1)+'%</text>';
+  }
+  s+='<text x="'+pad+'" y="'+(H+30)+'" font-size="10" fill="#94A3B8">'+mn.toFixed(1)+'%</text>';
+  s+='<text x="'+(pad+NB*(w+gap)-gap)+'" y="'+(H+30)+'" text-anchor="end" font-size="10" fill="#94A3B8">'+mx.toFixed(1)+'%</text>';
+  s+='</svg>';
+  return s;
+}
+function shortWhNameD(name){
+  const parts=String(name).split('-');
+  return parts[parts.length-1]+'（'+(parts[1]||'')+'）';
+}
+function devTableD(){
+  const rows=enrich.filter(x=>x.w.expo>0);
+  const mi=medianD(rows.filter(x=>!x.thin).map(x=>x.m.ir).filter(v=>v!=null));
+  const mc=medianD(rows.filter(x=>!x.thin).map(x=>x.m.cr).filter(v=>v!=null));
+  const list=rows.filter(function(x){
+    if(x.thin) return false;
+    let bad=0;
+    if(mi!=null&&x.m.ir!=null&&x.m.ir<mi*0.7) bad++;
+    if(mc!=null&&x.m.cr!=null&&x.m.cr<mc*0.7) bad++;
+    if(x.w.s_score&&x.w.s_score<4.6) bad++;
+    if(x.m.oos!=null&&x.m.oos>=1) bad++;
+    return bad>0;
+  });
+  document.getElementById('devHint').textContent='中位：入店 '+(mi?mi.toFixed(1):'—')+'% · 下单 '+(mc?mc.toFixed(1):'—')+'% · 命中 '+list.length+' 个仓（小样本仓不判定，完整清单见「经营中枢 · 待办诊断」）';
+  if(!list.length) return '<div class="empty" style="padding:16px">当前区间内没有低于中位 30% 的仓 ✓</div>';
+  list.sort(function(a,b){ return ((a.m.ir||99)+(a.m.cr||99))-((b.m.ir||99)+(b.m.cr||99)); });
+  let t='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>'+
+    '<th style="text-align:left;padding:7px 8px;color:#7A8CA6;border-bottom:1px solid #E7EEF9">仓库</th>'+
+    '<th style="padding:7px 6px;color:#7A8CA6;border-bottom:1px solid #E7EEF9">负责人</th>'+
+    '<th style="padding:7px 6px;color:#7A8CA6;border-bottom:1px solid #E7EEF9">入店转化</th>'+
+    '<th style="padding:7px 6px;color:#7A8CA6;border-bottom:1px solid #E7EEF9">下单转化</th>'+
+    '<th style="padding:7px 6px;color:#7A8CA6;border-bottom:1px solid #E7EEF9">评分</th>'+
+    '<th style="padding:7px 6px;color:#7A8CA6;border-bottom:1px solid #E7EEF9">缺货退款</th>'+
+    '<th style="padding:7px 6px;color:#7A8CA6;border-bottom:1px solid #E7EEF9">曝光</th></tr></thead><tbody>';
+  list.slice(0,30).forEach(function(x){
+    const nm='<span data-dwh="'+esc(x.w.name)+'" style="color:#2F6BD8;cursor:pointer;font-weight:700">'+esc(shortWhNameD(x.w.name))+'</span>';
+    t+='<tr><td style="padding:6px 8px;border-bottom:1px solid #F0F4FA;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(x.w.name)+'">'+nm+'</td>'+
+      '<td style="padding:6px 6px;border-bottom:1px solid #F0F4FA;color:#7A8CA6">'+esc(x.w.mgr||'-')+'</td>'+
+      '<td style="padding:6px 6px;border-bottom:1px solid #F0F4FA;text-align:center'+((mi!=null&&x.m.ir!=null&&x.m.ir<mi*0.7)?';color:#C02626;font-weight:700':'')+'">'+(x.m.ir==null?'—':p1(x.m.ir))+'</td>'+
+      '<td style="padding:6px 6px;border-bottom:1px solid #F0F4FA;text-align:center'+((mc!=null&&x.m.cr!=null&&x.m.cr<mc*0.7)?';color:#C02626;font-weight:700':'')+'">'+(x.m.cr==null?'—':p1(x.m.cr))+'</td>'+
+      '<td style="padding:6px 6px;border-bottom:1px solid #F0F4FA;text-align:center'+((x.w.s_score&&x.w.s_score<4.6)?';color:#C02626;font-weight:700':'')+'">'+(x.w.s_score?x.w.s_score.toFixed(1):'—')+'</td>'+
+      '<td style="padding:6px 6px;border-bottom:1px solid #F0F4FA;text-align:center'+((x.m.oos!=null&&x.m.oos>=1)?';color:#C02626;font-weight:700':'')+'">'+(x.m.oos==null?'—':p1(x.m.oos))+'</td>'+
+      '<td style="padding:6px 6px;border-bottom:1px solid #F0F4FA;text-align:right;color:#7A8CA6">'+fmtI(x.w.expo)+'</td></tr>';
+  });
+  t+='</tbody></table>';
+  if(list.length>30) t+='<div style="padding:8px;font-size:11.5px;color:#94A3B8">仅显示偏离最严重的 30 个仓（共 '+list.length+' 个）</div>';
+  return t;
+}
+function renderDist(){
+  if(!enrich||!enrich.length) return;
+  const rows=enrich.filter(x=>x.w.expo>0);
+  const irs=rows.map(x=>x.m.ir).filter(v=>v!=null);
+  const crs=rows.map(x=>x.m.cr).filter(v=>v!=null);
+  const mi=medianD(irs), mc=medianD(crs);
+  document.getElementById('irDist').innerHTML=distSVG(irs,mi);
+  document.getElementById('crDist').innerHTML=distSVG(crs,mc);
+  document.getElementById('irHint').textContent=irs.length+' 个仓 · 中位 '+(mi!=null?mi.toFixed(1):'—')+'%';
+  document.getElementById('crHint').textContent=crs.length+' 个仓 · 中位 '+(mc!=null?mc.toFixed(1):'—')+'%';
+  document.getElementById('devBody').innerHTML=devTableD();
+  document.querySelectorAll('#devBody [data-dwh]').forEach(function(el){
+    el.addEventListener('click',function(){ openWh(this.getAttribute('data-dwh')); });
+  });
+}
+
 function colorOf(lvl){ return lvl===2?'#C0281C':(lvl===1?'#DE8A0B':'#0E9D6E'); }
 function render(){
+  renderDist();
   const rows = filteredRows();
   rows.sort((a,b)=> sortK==='sc' ? b.sc-a.sc : (sortK==='rev' ? b.w.rev-a.w.rev : b.w.expo-a.w.expo));
   document.getElementById('cards').innerHTML = rows.map(x=>{

@@ -31,3 +31,13 @@ Thumbs.db
 
 # 流量页中间数据（由 脚本/build_traffic.py 生成，产物 traffic-data.bin 才入库）
 历史数据/traffic_payload.json
+
+# 经营中枢预览专用（不入库；线上版是 hub.html）
+preview-ops.html
+preview-ops-standalone.html
+preview-review.html
+.tmp_dbg/
+preview-v*.html
+mobile-*.png
+.tmp_patch/
+*-opsgoal.png

@@ -44,6 +44,7 @@ TRACKED = [
     "goods-data.bin",
     "traffic.html",
     "traffic-data.bin",
+    "hub.html",
     "脚本/build_traffic.py",
     "脚本/build_traffic_page.py",
     "脚本/traffic_common.py",
@@ -71,6 +72,7 @@ PAGE_FILES = [
     "看板页面/retail-dashboard.html",
     "index.html",
     "traffic.html",
+    "hub.html",
 ]
 
 # 本地配置（可选，git 忽略）：sync_config.json
@@ -354,6 +356,20 @@ def pin_cdn_version():
             io.open(g, "w", encoding="utf-8").write(h2)
             git("add", "traffic.html", check=False)
             changed += n
+    except Exception:
+        pass
+    # 经营中枢页（hub.html）：同时吃 dashboard / traffic / goods 三个数据包
+    try:
+        hub = os.path.join(HERE, "hub.html")
+        h = io.open(hub, encoding="utf-8").read()
+        h2 = h
+        for name in ("dashboard-data.bin", "traffic-data.bin", "goods-data.bin"):
+            pat_h = _re.compile(r'@(?:main|[0-9a-f]{7,12})/' + name.replace('.', r'\.'))
+            h2, n = pat_h.subn("@%s/%s" % (sha, name), h2)
+            changed += n
+        if h2 != h:
+            io.open(hub, "w", encoding="utf-8").write(h2)
+            git("add", "hub.html", check=False)
     except Exception:
         pass
     if not changed:
