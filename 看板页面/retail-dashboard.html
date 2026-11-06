@@ -1828,6 +1828,7 @@
   var DATA_MIN = "", DATA_MAX = "", DATA_DAYS = [], R_WH = [], R_PF = [], R_ROWS = [], RECORDS = [];
   var WAREHOUSES = [], MANAGERS = [], WH_MAP = Object.create(null), SOURCE_NOTE = "";
   var MGR_WH_N = null;                 // 归属表行数（门店维度）按负责人，来自数据包 MGR_WH_N
+  var WH_ALL = null, WH_DATA = null;   // 2026-11-06：归属表全量仓 / 有数据仓集合（无数据仓提醒用）
   var COVERAGE = null;                    // 数据口径覆盖率（P2-3，由 dashboard-data.json 注入）
   function buildRecords(d){
     DATA_MIN = d.DATA_MIN; DATA_MAX = d.DATA_MAX; DATA_DAYS = d.DATA_DAYS;
@@ -1835,10 +1836,14 @@
     WAREHOUSES = d.WAREHOUSES || [];
     MANAGERS = d.MANAGERS || [];
     MGR_WH_N = d.MGR_WH_N || null;
+    /* 2026-11-06：归属表全量仓（含暂无数据的仓）与有数据仓集合 */
+    WH_ALL = d.WAREHOUSES_ALL || null;
     SOURCE_NOTE = d.SOURCE_NOTE || "";
     COVERAGE = d.COVERAGE || null;
     WH_MAP = Object.create(null);
     WAREHOUSES.forEach(function(w){ WH_MAP[w.id] = w; });
+    WH_DATA = Object.create(null);
+    R_WH.forEach(function(id){ var w = WH_MAP[id]; if (w) WH_DATA[w.name] = 1; });
     var n, i, a, rr, sr, out;
     if (d.C){
       /* 列式（v2）：8 条等长数组，按下标取值，省掉二维行表的重建开销 */
@@ -3797,6 +3802,10 @@
       /* 2026-11-06：直接展示归属表里该负责人的数量（数据包 MGR_WH_N），无则回退去重仓数 */
       var whN = (MGR_WH_N && MGR_WH_N[mgr] != null) ? MGR_WH_N[mgr] : 0;
       if (!whN) WAREHOUSES.forEach(function(w){ if (w.manager === mgr) whN++; });
+      /* 无数据仓数：归属表在册但数据包全区间无订单的仓 */
+      var whNd = 0;
+      if (WH_ALL) WH_ALL.forEach(function(w){ if (w.manager === mgr && !WH_DATA[w.name]) whNd++; });
+      else WAREHOUSES.forEach(function(w){ if (w.manager === mgr && !WH_DATA[w.name]) whNd++; });
       var per = {}, total = 0, i, r;
       for (i = 0; i < PLATFORMS.length; i++) per[PLATFORMS[i]] = 0;
       var recs = filterRecords(ms, me, "all", "all", mgr);
@@ -3813,7 +3822,7 @@
       var custom = mGoals[mgr] != null;
       var suggest = Math.round(prevRev * 1.05);
       var target = custom ? +mGoals[mgr] : suggest;
-      list.push({ mgr: mgr, whN: whN, per: per, total: total, prevRev: prevRev,
+      list.push({ mgr: mgr, whN: whN, whNd: whNd, per: per, total: total, prevRev: prevRev,
                   custom: custom, target: target, pct: target > 0 ? total / target * 100 : 0 });
     });
 
@@ -3864,7 +3873,7 @@
         '<div class="opsg-head">' +
           '<span class="opsg-rank' + (done ? ' done' : (lag ? ' lag' : '')) + '">#' + (idx + 1) + '</span>' +
           '<span class="opsg-name">' + escHtml(x.mgr) + '</span>' +
-          '<span class="opsg-wh">' + x.whN + ' 个仓</span>' +
+          '<span class="opsg-wh">' + x.whN + ' 个仓' + (x.whNd ? ' · <b style="color:#C02626">' + x.whNd + ' 仓暂无数据</b>' : '') + '</span>' +
           '<span class="opsg-goalbox">目标 ¥' +
             '<input type="number" min="0" step="10000" value="' + (x.target > 0 ? x.target : "") + '" placeholder="—"' +
             ' data-opsgr="' + escHtml(x.mgr) + '" title="默认 = 上月真实营收 ' + fmtMoney(x.prevRev) + ' × 1.05；修改后按月保存在本机">' +

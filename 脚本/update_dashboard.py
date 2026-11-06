@@ -1127,6 +1127,13 @@ def main():
         # 旧页面读不到本文件会回退内嵌数据，不会白屏。
         "C": _cols,
         "WAREHOUSES": [{"id": name2id[w], "name": w, "manager": m} for w, m in whs],
+        # 2026-11-06 需求：归属表全量仓清单（含暂无数据的仓），hub「单仓360」与
+        # 运营目标卡据此按归属表展示仓数，并对无数据仓在卡片中提醒
+        "WAREHOUSES_ALL": [
+            {"id": name2id.get(w, 'WX%03d' % (i + 1)), "name": w, "manager": _m}
+            for i, (w, _m) in enumerate(sorted(
+                {v[0]: v[1] for v in mapping.values()}.items()))
+        ],
         "MANAGERS": managers,
         # 2026-11-06 需求：卡片直接展示「仓名-负责人归属关系表」里各负责人的数量
         # （按归属表行数=门店维度统计，一仓服务多门店时在多行重复计入，与表内逐行数出来的结果一致）

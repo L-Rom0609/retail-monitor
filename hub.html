@@ -870,6 +870,7 @@ function createRangePicker(mount, opt){
    ===================================================================== */
 var DASH=null, TRAF=null, GOODS=null;
 var DAYS=[], D_IDX={}, WH_NAMES=[], WH_MGR={};
+var WH_ALL_NAMES=[];   /* 2026-11-06：归属表全量仓名（含暂无数据的仓），数据包 WAREHOUSES_ALL */
 
 /* 日级（按营收类型拆分）：all / real / supp */
 var dayRev={all:[],real:[],supp:[]}, dayOrd={all:[],real:[],supp:[]};
@@ -889,6 +890,9 @@ function buildDash(D){
   var id2name={};
   D.WAREHOUSES.forEach(function(w){ id2name[w.id]=w.name; WH_MGR[w.name]=w.manager||""; });
   WH_NAMES=D.R_WH.map(function(id){ return id2name[id]||id; });
+  /* 2026-11-06：归属表全量仓（190 仓，含暂无数据的仓）；负责人映射以全量为准 */
+  WH_ALL_NAMES=(D.WAREHOUSES_ALL?D.WAREHOUSES_ALL.map(function(w){return w.name;}):WH_NAMES);
+  (D.WAREHOUSES_ALL||D.WAREHOUSES).forEach(function(w){ WH_MGR[w.name]=w.manager||""; });
   DATA_MIN=DAYS[0]; DATA_MAX=DAYS[DAYS.length-1];
 
   var n=DAYS.length, rt;
@@ -1477,18 +1481,27 @@ function renderWhPage(){
   var T=REV_TYPE_MAP[WH_RT]||REV_TYPES[0];
   var mgr=document.getElementById("whMgr").value;
   var rows=[];
-  WH_NAMES.forEach(function(n){
-    if(!whDay[n]) return;
+  /* 2026-11-06：按归属表全量仓展示——不管有无数据；无数据的仓在卡片中提醒 */
+  WH_ALL_NAMES.forEach(function(n){
     if(mgr&&WH_MGR[n]!==mgr) return;   /* 负责人筛选同时作用于汇总卡与卡片列表 */
+    if(!whDay[n]){                     /* 归属表在册但全区间无订单数据（新仓未出单/数据未回传） */
+      rows.push({name:n,mgr:WH_MGR[n]||"",noData:"none",rev:0,ord:0,aov:0,revCmp:null,ordCmp:null,
+        expo:0,visit:0,buyers:0,newb:0,tOrd:0,ir:null,cr:null,oosR:null,ccanR:null,lateR:null,
+        score:null,g:null,trend:[],prevExpo:0,hasTraf:false});
+      return;
+    }
     var c=WH_CACHE[whKey(n,WH_S,WH_E,WH_RT)]||(WH_CACHE[whKey(n,WH_S,WH_E,WH_RT)]=calcWh(n,WH_S,WH_E,WH_RT));
-    if(c.rev<=0&&!c.ord) return;
+    if(c.rev<=0&&!c.ord) c.noData="win";   /* 有历史数据但所选区间无营收 */
     rows.push(c);
   });
   var irs=rows.filter(function(r){return r.ir!=null;}).map(function(r){return r.ir;}).sort(function(a,b){return a-b;});
   var crs=rows.filter(function(r){return r.cr!=null;}).map(function(r){return r.cr;}).sort(function(a,b){return a-b;});
   var medIR=irs.length?irs[Math.floor(irs.length/2)]:null;
   var medCR=crs.length?crs[Math.floor(crs.length/2)]:null;
-  rows.forEach(function(r){ r.health=healthOf(r,medIR,medCR); });
+  rows.forEach(function(r){
+    r.health=healthOf(r,medIR,medCR);
+    if(r.noData) r.health={lvl:"y",flags:[[r.noData==="none"?"暂无数据":"所选区间无营收","y"]]};
+  });
 
   var tRev=0,tOrd=0,tG=0,tExpo=0;
   rows.forEach(function(r){
@@ -1496,8 +1509,13 @@ function renderWhPage(){
     if(r.g) tG+=(r.g.amt-r.g.cost);
     tExpo+=r.expo;
   });
+  var ndNone=0,ndWin=0;
+  rows.forEach(function(r){ if(r.noData==="none") ndNone++; else if(r.noData==="win") ndWin++; });
   document.getElementById("whSum").innerHTML=
-    sumCard("合计"+T.revLabel,"¥"+fmtWan(tRev),rows.length+" 个仓 · "+WH_S.slice(5)+" ~ "+WH_E.slice(5)+"（"+T.hint+"）")+
+    sumCard("合计"+T.revLabel,"¥"+fmtWan(tRev),rows.length+" 个仓（归属表口径）"+
+      (ndNone?" · <b style=\"color:#C02626\">"+ndNone+" 仓暂无数据</b>":"")+
+      (ndWin?" · "+ndWin+" 仓区间无营收":"")+
+      " · "+WH_S.slice(5)+" ~ "+WH_E.slice(5)+"（"+T.hint+"）")+
     sumCard("合计"+T.ordLabel,fmtInt(tOrd)+" 单","客单价 "+fmtMoney(tOrd?tRev/tOrd:0,2))+
     sumCard("可核算毛利",tG?"¥"+fmtWan(tG):"—",tRev?"毛利率 "+pct(tG/tRev,1):"商品底表未覆盖")+
     sumCard("全盘曝光",fmtK(tExpo),tExpo?"入店转化 "+pct(rows.reduce(function(a,r){return a+r.visit;},0)/tExpo,1):"无流量数据");
@@ -1519,8 +1537,12 @@ function renderWhPage(){
     }
   });
   document.getElementById("whNote").innerHTML=
-    "当前口径：<b>"+T.revLabel+"（"+T.hint+"）</b>，环比按「"+(list[0]?list[0].prevLabel:"等长周期")+"」。" +
-    "营收/单量与主看板一致（三平台全状态、剔除黑名单）；商品与毛利来自商品底表可核算订单；流量取美团闪购后台，8 个新仓暂无流量数据。共 "+list.length+" 个仓。";
+    "当前口径：<b>"+T.revLabel+"（"+T.hint+"）</b>，环比按「"+(list[0]&&!list[0].noData?list[0].prevLabel:"等长周期")+"」。" +
+    "营收/单量与主看板一致（三平台全状态、剔除黑名单）；商品与毛利来自商品底表可核算订单；流量取美团闪购后台，8 个新仓暂无流量数据。" +
+    "仓数口径=仓名-负责人归属关系表，共 "+rows.length+" 个仓" +
+    (ndNone?"，其中 <b style=\"color:#C02626\">"+ndNone+" 仓暂无数据</b>":"") +
+    (ndWin?"，"+ndWin+" 仓所选区间无营收":"") +
+    "（搜索命中 "+list.length+" 个）。";
 
   var grid=document.getElementById("whGrid");
   if(!list.length){ grid.innerHTML='<div class="load">没有符合条件的仓库</div>'; return; }
@@ -1544,6 +1566,23 @@ function healthOf(r,medIR,medCR){
 }
 
 function whCard(r,medIR,medCR){
+  /* 2026-11-06：无数据仓的提醒卡（归属表在册但暂无数据 / 区间无营收） */
+  if(r.noData){
+    var T0=REV_TYPE_MAP[WH_RT]||REV_TYPES[0];
+    return '<div class="wcard" data-n="'+esc(r.name)+'">'+
+      '<div class="wc-h"><span class="st y"></span>'+
+        '<div class="nm" title="'+esc(r.name)+'">'+esc(shortWh(r.name))+'</div>'+
+        '<span class="mg">'+esc(r.mgr||"—")+'</span></div>'+
+      '<div class="wc-main">'+
+        '<div class="big" style="color:#94A3B8">'+(r.noData==="none"?"暂无数据":"区间无营收")+'</div>'+
+        '<div class="dlt flat">—</div>'+
+        '<div class="mx"><b>—</b><span>'+T0.ordLabel+'</span></div>'+
+      '</div>'+
+      '<div class="wc-f"><span class="tag warn">'+
+        (r.noData==="none"?"归属表在册，暂无订单数据（新仓未出单或数据未回传），出单后自动计入":"归属表在册，所选区间内无营收记录")+
+      '</span></div>'+
+    '</div>';
+  }
   var h=r.health, g=r.g;
   var gross=g?g.amt-g.cost:null;
   var gm=g&&g.amt?(g.amt-g.cost)/g.amt:null;
@@ -1590,6 +1629,18 @@ function spark(arr){
 }
 
 function openWhModal(name){
+  /* 2026-11-06：无数据仓弹提醒，不展示统计 */
+  if(!whDay[name]){
+    document.getElementById("modal").innerHTML=
+      '<div class="mh"><div><h2>'+esc(name)+'</h2>'+
+        '<div class="sub">'+esc(WH_MGR[name]||"未分配负责人")+' · 归属表在册仓</div></div>'+
+        '<button class="x" id="mx" type="button">✕</button></div>'+
+      '<div class="ins" style="margin-top:14px"><div class="it"><span class="bd warn">提醒</span>'+
+        '<p>该仓在「仓名-负责人归属关系表」中在册，但当前数据区间（'+DATA_MIN+' ~ '+DATA_MAX+'）内暂无订单数据——通常为新仓未出单或数据未回传。出单后会自动出现在看板中。</p></div></div>';
+    document.getElementById("mask").hidden=false;
+    document.getElementById("mx").addEventListener("click",closeModal);
+    return;
+  }
   var r=WH_CACHE[whKey(name,WH_S,WH_E,WH_RT)]||calcWh(name,WH_S,WH_E,WH_RT);
   var g=r.g, h=r.health;
   var T=REV_TYPE_MAP[WH_RT]||REV_TYPES[0];
@@ -1673,9 +1724,15 @@ function renderDiag(){
   var mgrF=document.getElementById("dgMgr").value;
   var fSel=document.getElementById("dgFilter").value;
   var rows=[];
-  WH_NAMES.forEach(function(n){
-    if(!whDay[n]) return;
+  /* 2026-11-06：诊断列表同样按归属表全量仓——全区间无数据的仓以「暂无数据」黄标进入 */
+  WH_ALL_NAMES.forEach(function(n){
     if(mgrF&&WH_MGR[n]!==mgrF) return;
+    if(!whDay[n]){
+      rows.push({name:n,mgr:WH_MGR[n]||"",noData:"none",rev:0,ord:0,revCmp:null,ordCmp:null,
+        expo:0,visit:0,buyers:0,tOrd:0,ir:null,cr:null,oosR:null,ccanR:null,score:null,
+        hasTraf:false,prevExpo:0,health:{lvl:"y",flags:[["暂无数据","y"]]}});
+      return;
+    }
     var c=WH_CACHE[whKey(n,DG_S,DG_E,"all")]||(WH_CACHE[whKey(n,DG_S,DG_E,"all")]=calcWh(n,DG_S,DG_E,"all"));
     if(c.rev<=0&&!c.ord) return;
     rows.push(c);
@@ -1684,7 +1741,10 @@ function renderDiag(){
   var crs=rows.filter(function(r){return r.cr!=null;}).map(function(r){return r.cr;}).sort(function(a,b){return a-b;});
   var medIR=irs.length?irs[Math.floor(irs.length/2)]:null;
   var medCR=crs.length?crs[Math.floor(crs.length/2)]:null;
-  rows.forEach(function(r){ r.health=healthOf(r,medIR,medCR); });
+  rows.forEach(function(r){
+    r.health=healthOf(r,medIR,medCR);
+    if(r.noData) r.health={lvl:"y",flags:[["暂无数据","y"]]};
+  });
 
   var list=rows.filter(function(r){
     if(fSel==="all") return r.health.flags.length>0;
@@ -1700,7 +1760,9 @@ function renderDiag(){
     if(sev[a.health.lvl]!==sev[b.health.lvl]) return sev[a.health.lvl]-sev[b.health.lvl];
     return a.rev-b.rev;
   });
-  document.getElementById("dgCount").textContent="命中 "+list.length+" 个仓";
+  var ndDiag=rows.filter(function(r){return r.noData;}).length;
+  document.getElementById("dgCount").textContent="命中 "+list.length+" 个仓"+
+    (ndDiag?"（另 "+ndDiag+" 仓归属表在册但暂无数据）":"");
 
   var th='<thead><tr><th>仓库</th><th>负责人</th><th class="r">总营收</th><th class="r">环比</th>'+
     '<th class="r">曝光环比</th><th class="r">入店转化</th><th class="r">下单转化</th>'+
@@ -1780,7 +1842,8 @@ function initFilters(){
   });
   var mgrSel=document.getElementById("whMgr");
   var mgrs={};
-  WH_NAMES.forEach(function(n){ if(WH_MGR[n]) mgrs[WH_MGR[n]]=1; });
+  /* 2026-11-06：按归属表全量仓取负责人（含暂无数据仓的负责人） */
+  WH_ALL_NAMES.forEach(function(n){ if(WH_MGR[n]) mgrs[WH_MGR[n]]=1; });
   Object.keys(mgrs).sort().forEach(function(m){
     var o=document.createElement("option"); o.value=m; o.textContent=m;
     mgrSel.appendChild(o);
