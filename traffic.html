@@ -309,7 +309,7 @@ tbody tr:hover td{background:#F8FBFF;}
 </style></head><body><div class="wrap">
 <div class="top">
   <div><h1>美团闪购 · 仓流量巡检</h1>
-    <div class="sub">2026-07-01 ~ 2026-11-05（128 天）· 172 个仓 / 191 家门店 · 营收单量取订单底表，流量取平台门店明细（商家ID ↔ 渠道店铺ID）</div></div>
+    <div class="sub">2026-07-01 ~ 2026-11-06（129 天）· 177 个仓 / 196 家门店 · 营收单量取订单底表，流量取平台门店明细（商家ID ↔ 渠道店铺ID）</div></div>
   <div class="right"><span class="pill mt"><i class="dot"></i>美团闪购</span><span class="pill" style="background:#E9F7F0;color:#0E7A46;border-color:#BFE7D5;">已上线</span>
     <span class="pill" id="helpBtn" style="cursor:pointer;background:var(--brand-soft);border-color:#CFE2FC;color:var(--brand)">字段含义与判定标准</span></div>
 </div>
@@ -376,7 +376,7 @@ tbody tr:hover td{background:#F8FBFF;}
 </div>
 <div class="cards" id="cards" hidden></div>
 <div class="note">
-  <b>怎么巡检：</b>「统计区间」与主看板同款（环比口径可切换：自然月优先 / 等长周期），切换后全页联动——漏斗、KPI、仓卡片、风险判定、门店抽屉全部按所选区间重算，所有环比对比上一周期（红▲=增、绿▼=减）；顶部「负责人 + 仓名称」筛选与运营总览同款（仓名称可输入搜索），同样会让漏斗联动（筛单仓即可直接看该仓漏斗）；任一指标显著下滑时卡片会弹出「▼ 下滑提醒」并直接列出该排查的字段，其中<b>营收下滑、单量下滑为红色强提醒</b>（环比降幅 ≥10% 触发，优先展示）；点卡片看门店级明细，点「字段含义与判定标准」看每个字段的算法与阈值；点「未匹配门店」查看未归属的 150 家美团商家（建议补归属表）。<br>
+  <b>怎么巡检：</b>「统计区间」与主看板同款（环比口径可切换：自然月优先 / 等长周期），切换后全页联动——漏斗、KPI、仓卡片、风险判定、门店抽屉全部按所选区间重算，所有环比对比上一周期（红▲=增、绿▼=减）；顶部「负责人 + 仓名称」筛选与运营总览同款（仓名称可输入搜索），同样会让漏斗联动（筛单仓即可直接看该仓漏斗）；任一指标显著下滑时卡片会弹出「▼ 下滑提醒」并直接列出该排查的字段，其中<b>营收下滑、单量下滑为红色强提醒</b>（环比降幅 ≥10% 触发，优先展示）；点卡片看门店级明细，点「字段含义与判定标准」看每个字段的算法与阈值；点「未匹配门店」查看未归属的 146 家美团商家（建议补归属表）。<br>
   <b>口径：</b>营收/单量 = 订单底表美团闪购（11-02/11-03 底表日期为斜杠格式，已归一化）；曝光/转化/履约/评分 = 平台门店明细（7/8/9/10 月 + 11-01~03 共 5 份）按商家ID汇总重算。区间内订单 &lt;10 单的仓不做风险判定。
 </div>
 </div>
@@ -386,8 +386,8 @@ tbody tr:hover td{background:#F8FBFF;}
 <script>
 (function(){
 var DATA_URLS = [
-  "https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@abdb8ea4212a/traffic-data.bin",
-  "https://cdn.jsdelivr.net/gh/L-Rom0609/retail-monitor@abdb8ea4212a/traffic-data.bin",
+  "https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@main/traffic-data.bin",
+  "https://cdn.jsdelivr.net/gh/L-Rom0609/retail-monitor@main/traffic-data.bin",
   "./traffic-data.bin"];
 var msg = document.createElement("div");
 msg.id = "bootmsg";
