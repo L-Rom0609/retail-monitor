@@ -1,0 +1,8 @@
+# 只约束新增/易出问题的类型，避免全仓库换行符重规范化
+*.sh      text eol=lf
+*.command text eol=lf
+*.bin     binary
+*.xlsx    binary
+*.png     binary
+*.jpg     binary
+*.bat     -text

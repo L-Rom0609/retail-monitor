@@ -20,7 +20,7 @@
 | `index.html` | 看板部署入口（= retail-dashboard.html 的副本，GitHub Pages 根文件） | ✅ 是 |
 | `dashboard-data.bin` | 看板外部数据（列式+gzip 二进制，比旧版小 53%）；线上看板从 CDN 优先拉取它 | ✅ 是 |
 | `data.json` / `dashboard-data.json` | 中间产物 | ❌ 不入库 |
-| `底表输入/` | 你放 CSV / 归属表的本地目录 | ❌ 不入库（仅本机） |
+| `数据底表/` | 你放 CSV / 归属表的本地目录 | ❌ 不入库（仅本机） |
 | `sync_config.json` | 你的远程地址 / 令牌（个人） | ❌ 不入库 |
 
 ---
@@ -33,10 +33,11 @@
 | 线上看板 | **https://l-rom0609.github.io/retail-monitor/** |
 | 数据文件 | https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@main/dashboard-data.bin |
 | 托管方式 | GitHub Pages，来源 `main` 分支根目录（push 后自动重建） |
-| 令牌保存 | 本机 `sync_config.json` 的 `pat` 字段（已被 `.gitignore` 忽略，不入库） |
+| 令牌保存 | 本机 `配置与映射/sync_config.json` 的 `pat` 字段（已被 `.gitignore` 忽略，不入库） |
 
-> 若换机器（例如 Mac），只需：`git clone` 仓库 → 在同目录建一份 `sync_config.json`
-> （复制 `sync_config.example.json`，把 `pat` 填成令牌）→ 即可运行。`remote_url` 已在模板里写好。
+> 若换机器（例如 Mac），只需：`git clone` 仓库 → 在 **`配置与映射/`** 下建一份 `sync_config.json`
+> （复制同目录的 `sync_config.example.json`，把 `pat` 填成令牌）或 `export RETAIL_SYNC_PAT=…` → 即可运行。
+> 完整步骤见 **[Mac 端部署与双机协同方案.md](Mac%20端部署与双机协同方案.md)**。
 
 ---
 
@@ -49,7 +50,7 @@
    → 自动 push 到 GitHub → **线上看板几十秒后自动变成最新**（无需任何发布操作）。
 4. 更新日志写在 `数据看板--底表更新/更新日志.txt`。
 
-> 也可以把 CSV 直接丢进仓库里的 `底表输入/` 目录 —— 两个位置都会被扫描。
+> 也可以把 CSV 直接丢进仓库里的 `数据底表/` 目录 —— 两个位置都会被扫描。
 
 ---
 
@@ -60,22 +61,26 @@
 xcode-select --install        # 提供 git
 brew install python3          # 或用官网 pkg
 
-# 2) 克隆仓库
+# 2) 克隆仓库（务必用 git clone，不要手工拷贝目录）
 git clone https://github.com/L-Rom0609/retail-monitor.git
 cd retail-monitor
 
-# 3) 配置令牌（一次性；之后会写进本地 sync_config.json，不再需要 export）
-cp sync_config.example.json sync_config.json
-# 编辑 sync_config.json，把 "pat": "" 改成 "pat": "你的令牌"
-# 或：export RETAIL_SYNC_PAT=你的令牌   # update.sh 会自动帮你生成配置
+# 3) 中文路径与换行符（一次性）
+git config core.autocrlf input
+git config core.precomposeunicode true
+chmod +x 脚本/update.sh "Mac 一键更新.command"
 
-# 4) 日常更新：把订单 CSV 丢进仓库里的 底表输入/ 目录，然后
-./update.sh
-# 或者让脚本去指定目录找 CSV：
-RETAIL_DATA_DIR=~/我的底表 ./update.sh
+# 4) 配置令牌（一次性）
+export RETAIL_SYNC_PAT=你的GitHub令牌      # 首次运行会自动写进 配置与映射/sync_config.json
+
+# 5) 日常更新：订单 CSV 放进 数据底表/，门店明细放进 数据底表/门店明细/，然后
+bash 脚本/update.sh
+# 或 Finder 双击「Mac 一键更新.command」
+# 或指定 CSV 目录：RETAIL_DATA_DIR=~/我的底表 bash 脚本/update.sh
 ```
 
-Mac 与 Windows 行为完全一致：拉取云端最新 → 处理本地 CSV → 合并 → 推送 → 生成本地看板。
+Mac 与 Windows 行为一致：拉取云端最新 → 合并本地 CSV → 重建全部数据包 → 推送上线。
+**双机不要同时跑**，完整规则见 [Mac 端部署与双机协同方案.md](Mac%20端部署与双机协同方案.md)。
 
 ---
 
@@ -107,7 +112,7 @@ Mac 与 Windows 行为完全一致：拉取云端最新 → 处理本地 CSV →
 4. 旧的 WorkBuddy 链接（`?sharecode=W3VCYBIKZB`）已冻结作废，可忽略（它永远停在 10-31 那版）。
 
 ### 之后每次更新（你只做这一件）
-在 Windows 双击 `一键更新看板.bat`（或 Mac 跑 `./update.sh`）→ 脚本处理 CSV、合并、
+在 Windows 双击 `一键更新看板.bat`（或 Mac 跑 `bash 脚本/update.sh`）→ 脚本处理 CSV、合并、
 生成 `dashboard-data.bin` 并自动 push（还会自动清 CDN 缓存） → **线上看板自动变成最新**，你无需任何发布操作。
 
 > 本地 `retail-dashboard.html` / `index.html` 仍带内嵌数据（当前 148,809 行 / 截止 11-01），
@@ -130,9 +135,13 @@ Git 压缩存起来后**每次约 +2~3 MB**。
 压缩动作 = 以当前文件快照重建一条提交 → force push → 本地 `gc` 清掉旧快照。
 实测：12 条提交 / 29 MB → **1 条提交 / 2.7 MB**，所有数据文件完好。
 
+**⚠ 双机场景建议关闭自动压缩**：压缩会 force push 重写提交链，另一台机器失去共同祖先，
+且页面里已钉的 CDN `@<sha>` 地址会 404。日常两端更新时统一加 `--no-squash`
+（Mac 的 `full_sync.py` 链路本身不触发压缩）。
+
 **另一台机器怎么办**：它的下次运行会发现本地与云端没有共同祖先，
-`git_pull` 会自动 `fetch + reset --hard` 对齐云端（日志会提示「已重置为云端最新」）。
-原始 CSV 仍躺在底表目录，重跑流水线会重新合并，**不会丢数据**。
+`git_pull` 会自动 `fetch + reset --soft` 对齐云端（保留工作区改动，日志会提示）。
+原始 CSV 仍躺在底表目录，重跑流水线会重新合并。**最稳妥的做法是压缩后两端都重新 clone。**
 
 **手动控制**：
 ```bash
