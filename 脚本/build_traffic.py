@@ -126,13 +126,17 @@ print("可用订单底表 %d 份" % len(FILES))
 
 
 def norm_date(v):
-    """底表日期格式不统一：2026-11-02 / 2026/11/2 等，统一为 ISO。"""
-    s = (v or "").strip()[:10]
+    """底表日期格式不统一：2026-11-02 23:35 / 2026/7/1 23:18 / 2026/11/9 等，统一为 ISO 日期。"""
+    s = (v or "").strip()
     if "/" in s:
+        s = s.split(" ")[0]          # 斜杠格式可能带时间（如 2026/7/1 23:18），先截掉再按 / 拆
         parts = s.split("/")
         if len(parts) == 3:
-            return "%s-%02d-%02d" % (parts[0], int(parts[1]), int(parts[2]))
-    return s
+            try:
+                return "%s-%02d-%02d" % (parts[0], int(parts[1]), int(parts[2]))
+            except ValueError:
+                return ""
+    return s[:10]
 
 
 def read_xlsx(path):
