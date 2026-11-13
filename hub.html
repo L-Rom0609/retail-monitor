@@ -6,9 +6,9 @@
 <title>经营中枢｜即时零售数据监控看板</title>
 <link rel="preconnect" href="https://gcore.jsdelivr.net" crossorigin />
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-<link rel="preload" as="fetch" href="https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@9210e07b471a/dashboard-data.bin" crossorigin="anonymous" />
-<link rel="preload" as="fetch" href="https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@9210e07b471a/traffic-data.bin" crossorigin="anonymous" />
-<link rel="preload" as="fetch" href="https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@9210e07b471a/goods-data.bin" crossorigin="anonymous" />
+<link rel="preload" as="fetch" href="https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@7d6e1036a2d5/dashboard-data.bin" crossorigin="anonymous" />
+<link rel="preload" as="fetch" href="https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@7d6e1036a2d5/traffic-data.bin" crossorigin="anonymous" />
+<link rel="preload" as="fetch" href="https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@7d6e1036a2d5/goods-data.bin" crossorigin="anonymous" />
 <style>
   :root{
     --navy:#0B2447; --navy2:#12386E; --navy3:#16457F;
@@ -507,14 +507,14 @@ var DATA_URLS = {
   /* 顺序与主看板一致：CDN（钉提交号）→ 同源兜底。
      不能同源优先：国内直连 GitHub Pages 实测仅 ~30KB/s，
      三个数据包约 2.9MB 串行等待会把整页挂在加载中。 */
-  dash: ["https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@9210e07b471a/dashboard-data.bin",
-         "https://cdn.jsdelivr.net/gh/L-Rom0609/retail-monitor@9210e07b471a/dashboard-data.bin",
+  dash: ["https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@7d6e1036a2d5/dashboard-data.bin",
+         "https://cdn.jsdelivr.net/gh/L-Rom0609/retail-monitor@7d6e1036a2d5/dashboard-data.bin",
          "./dashboard-data.bin"],
-  traf: ["https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@9210e07b471a/traffic-data.bin",
-         "https://cdn.jsdelivr.net/gh/L-Rom0609/retail-monitor@9210e07b471a/traffic-data.bin",
+  traf: ["https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@7d6e1036a2d5/traffic-data.bin",
+         "https://cdn.jsdelivr.net/gh/L-Rom0609/retail-monitor@7d6e1036a2d5/traffic-data.bin",
          "./traffic-data.bin"],
-  goods:["https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@9210e07b471a/goods-data.bin",
-         "https://cdn.jsdelivr.net/gh/L-Rom0609/retail-monitor@9210e07b471a/goods-data.bin",
+  goods:["https://gcore.jsdelivr.net/gh/L-Rom0609/retail-monitor@7d6e1036a2d5/goods-data.bin",
+         "https://cdn.jsdelivr.net/gh/L-Rom0609/retail-monitor@7d6e1036a2d5/goods-data.bin",
          "./goods-data.bin"]
 };
 
